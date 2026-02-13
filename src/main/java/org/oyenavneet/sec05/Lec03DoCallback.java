@@ -5,6 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
+
+/*
+    doOnNext()
+ */
 public class Lec03DoCallback {
     private static final Logger logger = LoggerFactory.getLogger(Lec03DoCallback.class);
 
@@ -16,7 +20,7 @@ public class Lec03DoCallback {
                         fluxSink.next(i);
                     }
                     fluxSink.complete();
-                    // fluxSink.error(new RuntimeException("oops"));
+                     //fluxSink.error(new RuntimeException("oops"));
                     logger.info("producer ends");
                 })
                 .doOnComplete(() -> logger.info("doOnComplete-1"))
@@ -29,7 +33,7 @@ public class Lec03DoCallback {
                 .doOnCancel(() -> logger.info("doOnCancel-1"))
                 .doOnDiscard(Object.class, o -> logger.info("doOnDiscard-1: {}", o))
                 .doFinally(signal -> logger.info("doFinally-1: {}", signal)) // finally irrespective of the reason
-                // .take(2)
+                 .take(2)
                 .doOnComplete(() -> logger.info("doOnComplete-2"))
                 .doFirst(() -> logger.info("doFirst-2"))
                 .doOnNext(item -> logger.info("doOnNext-2: {}", item))
