@@ -1,0 +1,7 @@
+We have 4 product ids - 1,2,3,4
+Get the product name using product-service
+Timeout 2 seconds
+    ->call fallback from timeout service to get the product name
+call fallback for empty service to get the product name in case of empty
+let the client class abstract timeout/empty handling
+    -> client.getProductName(1)
