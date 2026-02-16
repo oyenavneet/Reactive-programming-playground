@@ -1,0 +1,15 @@
+-- Order Stream service
+    -- need min 2 subscriber
+    -- Order stream {
+        String item,
+        String category,
+        Integer price,
+        Integer quantity
+    }
+-- Inventory Service
+    -- based on order it will update the inventory data
+    -- every 2 second it will be emitting inventory data
+
+-- Revenue service
+    -- based on order for each category it will update revenue
+    -- every 2 second it will be emitting revenue data

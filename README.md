@@ -23,10 +23,21 @@ Some Example of Operators
     - takeUntil
 
 #Hot & Cold Publishers
+
     ##Cold Publisher: 
-        :In cold publisher each new subscriber get its own dedicated data producer and received the full sequence of data from beginning
-        :Example: Netflix - if two subscribe watching same movie they can have different timeline 
+
+        - In cold publisher each new subscriber get its own dedicated data producer and received the full sequence of data from beginning
+        - Example: Netflix - if two subscribe watching same movie they can have different timeline 
+
     ##Hot Publisher:
-        :In Hot publisher we have only one producer for all the subscribers
-        :Didn't need any subscriber to emit data
-        :Example: Movie Streaming on TV each user have same timeline, event no user is watching still the tv channel stream data movie
+
+        - In Hot publisher we have only one producer for all the subscribers
+        - Didn't need any subscriber to emit data
+        - Example: Movie Streaming on TV each user have same timeline, event no user is watching still the tv channel stream data movie
+
+        |     Method                    | Usage                   |
+        |-------------------------------|-------------------------|
+        | share(), publish().refCount(1)| At least 1 subscriber. It will start when there is at least 1 subscriber and stop when there is 0 subscriber.we can re-subscribe |
+        | publish().autoConnect(1)      | Same as above. It does NOT stop when subscribers leave. |
+        | publish().autoConenct(0)      | Real hot publisher - no subscriber required |
+        | replay(n).autoConenct(0)      | Cache the emitted item for late subscriber |
