@@ -83,3 +83,25 @@ then it can be done easily by using operators below:
 
 parallel(), runOn() can be used in case of CPU intensive task or if you have multiple core of CPU and want to utilize it.
 
+
+## Backpressure / Overflow Strategy
+
+In simple word, When producer produce a lot of data which can't be consumed by subscriber to handle the flow-control that allows
+a slow consumer (subscriber) to single the fast producer that it is being overwhelmed by the rate of data, thereby using backpressure
+flow-control mechanism we can prevent system by overload, memory issues (like OutOfMemoryError) or data loss.
+
+## Backpressure Strategy's
+
+| Stratgy | Behavior                                                                      |
+|---------|-------------------------------------------------------------------------------|
+| buffer  | keep in memory                                                                |
+| error   | throw error to the downstream                                                 |
+| drop    | Once the queue is full, new items will be dropped                             |
+| latest  | Once the queue is full, keep 1 latest items as and when it arrived. drop old. |
+
+
+## Overflow Strategy 
+- It is used on Producer/upstream 
+- It is used  when you want one Strategy for all of your subscriber
+- Overflow strategy is second parameter in Flux.create()
+- Overflow Strategies are: BUFFER, ERROR, DROP, LATEST, IGNORE
