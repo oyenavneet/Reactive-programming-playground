@@ -2,11 +2,17 @@ package org.oyenavneet.common;
 
 import com.github.javafaker.Faker;
 import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.function.UnaryOperator;
 
 public class Utils {
+
+    public static final Logger  logger = LoggerFactory.getLogger(Utils.class);
 
     public static final Faker faker = Faker.instance();
 
@@ -44,5 +50,13 @@ public class Utils {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    public static <T>UnaryOperator<Flux<T>> fluxLogger(String name){
+        return flux -> flux
+                .doOnSubscribe(s-> logger.info("Subscribing to {}",name))
+                .doOnCancel(() -> logger.info("Cancelling {}",name))
+                .doOnComplete(() -> logger.info("{} Completed",name));
     }
 }

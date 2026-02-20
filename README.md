@@ -105,3 +105,76 @@ flow-control mechanism we can prevent system by overload, memory issues (like Ou
 - It is used  when you want one Strategy for all of your subscriber
 - Overflow strategy is second parameter in Flux.create()
 - Overflow Strategies are: BUFFER, ERROR, DROP, LATEST, IGNORE
+
+## Combining Publishers in Reactor
+
+## Why is this needed?
+
+In real-world **microservice architectures**, we often make multiple network calls to different services.
+
+Depending on business requirements:
+
+* Sometimes calls must be executed **in sequence**
+* Sometimes they should run **in parallel**
+* Sometimes we need to **aggregate results**
+* Sometimes we only care about **completion**, not intermediate data
+
+In **Reactive Programming**, publishers can be combined using operators to build complex reactive flows that satisfy these business needs.
+
+---
+
+## Use Case Example
+
+**Movie Streaming Application**
+
+When a user logs in and opens the homepage:
+
+* Fetch **Recommendations**
+* Fetch **Trending Movies**
+* Fetch **User Watch History**
+
+Using reactive programming, we combine these API publishers into a **single aggregated stream** and send the final result to the subscriber.
+
+---
+
+## Reactor Operators for Combining Publishers
+
+Reactor provides multiple operators to control execution order, concurrency, and combination behavior.
+
+---
+### For Independent Producer
+- startWith : will be useful when you have multiple producers, and you want to check one producer first before you go to another producer (e.g., check cache before calling DB).
+- concatWith : sequentially subscribes to another producer only after the first one completes (order guaranteed, no interleaving).
+- merge : subscribes to multiple producers at the same time and emits values as they arrive (order not guaranteed, can interleave).
+- zip : combines multiple producers by pairing their emitted items one-by-one based on index and emits combined results.
+
+### For Dependent Sequential Calls
+- flatMap : transforms each emitted item into a new producer and merges them concurrently (order not guaranteed, faster but interleaved).
+- concatMap : transforms each emitted item into a new producer and subscribes to them sequentially (order preserved, waits for one to complete before starting the next).
+
+| Operator     | Order Preserved   | Parallel   | Use Case                     |
+| ------------ | ----------------- | ---------- | ---------------------------- |
+| `startWith`  | Yes               | No         | Fallback (cache → DB)        |
+| `concatWith` | Yes               | No         | Sequential execution         |
+| `merge`      | No                | Yes        | Parallel independent calls   |
+| `zip`        | Yes (index-based) | Yes        | Combine synchronized results |
+| `flatMap`    | No                | Yes        | Dependent parallel calls     |
+| `concatMap`  | Yes               | No         | Dependent sequential calls   |
+| `then`       | N/A               | Sequential | Only care about completion   |
+
+# `then` Operator
+
+### `then`
+
+* Use when you're **not interested in intermediate results**.
+* Executes publishers sequentially.
+* Only signals **completion** (or error).
+
+### Example Use Case
+
+Inserting multiple records into a database:
+
+* You don't care about each insert result.
+* You only care whether the entire operation **succeeded or failed**.
+
+
