@@ -178,3 +178,69 @@ Inserting multiple records into a database:
 * You only care whether the entire operation **succeeded or failed**.
 
 
+## Batching / Windowing / Grouping
+
+When consuming a continuous stream (`Flux<T>`) from systems like Kafka or RabbitMQ, you may need to process data in batches or logical groups.
+
+### buffer
+- Collects items into a `List`
+- Emits when size/time condition is met
+- `Flux<T> → Flux<List<T>>`
+- Use for bulk DB inserts or batch API calls
+
+### window
+- Splits stream into smaller sub-streams
+- Emits `Flux<T>` instead of `List`
+- `Flux<T> → Flux<Flux<T>>`
+- Use when you want reactive processing per batch
+
+### groupBy
+- Groups items based on a key
+- `Flux<T> → Flux<GroupedFlux<K, T>>`
+- Use for logical grouping (e.g., by userId, accountId)
+
+
+## Repeat & Retry
+
+In Reactive programing we know that we have publisher and subscriber 
+no item can be emitted after:
+- onComplete
+- On Error
+
+| Operator | Behavior                           |
+|----------|------------------------------------|
+| repeat   | Resubscribe after complete signal  |
+| retry    | Resubscribe after error signal     |
+
+
+## Sinks
+
+In Reactive Programming, publishers (like `Flux` and `Mono`) start emitting data only when there is a subscriber.
+
+However, in real-world applications, there are scenarios where:
+
+- You need to emit data manually.
+- You want to push events whenever something happens (e.g., user action, callback, message listener).
+- You need to emit data from multiple threads.
+- You may want to handle emission even before subscribers are attached.
+
+For such use cases, Reactor provides **Sinks**.
+
+### What are Sinks?
+
+Sinks are programmatic event emitters that allow you to:
+
+- Push data manually into a reactive stream.
+- Control when and how data is emitted.
+- Safely emit items from multiple threads.
+- Connect imperative code with reactive pipelines.
+
+In simple terms, a Sink acts as a bridge between non-reactive (imperative) code and reactive streams.
+
+| Sink Type          | Publisher Type | # of Subscribers | Behavior                                                                   |
+|--------------------|----------------|------------------|----------------------------------------------------------------------------|
+| `one`              | Mono           | N                |                                                                            |
+| `many - unicast`   | Flux           | 1                | subscriber cam join late if required. message will be stored in the memory |
+| `many - multicast` | Flux           | N                | late subscribers can not see the messages                                  |
+| `many - replay`    | Flux           | N                | with relay of all values to late susbscribers                              |
+

@@ -1,0 +1,6 @@
+You have a stream of PurchaseOrder
+Based on Order Category you have to perform some task
+- Kids orders
+    - add 1 free order from every kids order
+- Automotive orders
+    - add $100 to the price
