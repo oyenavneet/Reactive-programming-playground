@@ -1,0 +1,4 @@
+- Simulate something like SlackRoom
+- adding some members, and they are having some conversation
+- if any one say something every will be able to see
+-

@@ -9,6 +9,11 @@ import reactor.core.publisher.Sinks;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+/*
+
+    we can ony emit one message
+ */
+
 public class Lec01SinkOne {
 
     public static final Logger logger = getLogger(Lec01SinkOne.class);
