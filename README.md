@@ -1,4 +1,136 @@
 # Learning Reactive Programming Using Project Reactor
+### Reactor Basics: Publisher, Mono and Flux
+## Publisher
+
+In Reactive Streams, `Publisher` is a core interface.
+
+Reactor provides two main implementations:
+
+- `Mono<T>`
+- `Flux<T>`
+
+Both represent asynchronous, non-blocking data pipelines.
+
+# Mono
+
+`Mono<T>` represents a publisher that can emit:
+
+- 0 or 1 item
+- Followed by `onComplete` or `onError`
+
+Even if a subscriber requests multiple items, `Mono` will emit at most one element.
+
+## When to Use Mono
+
+- When you expect a single result
+- Request–response scenarios
+- Fetching a single record from database
+- Calling an external service returning one object
+
+```java
+Mono<User> userMono = userRepository.findById(id);
+````
+
+# Flux
+
+`Flux<T>` represents a publisher that can emit:
+
+* 0 to N items
+* Followed by `onComplete` or `onError`
+* Can represent infinite streams
+
+## When to Use Flux
+
+* Multiple results
+* Streaming data
+* Event-driven systems
+* Messaging systems (Kafka, RabbitMQ, etc.)
+
+Example:
+```java
+Flux<Order> orderFlux = orderRepository.findAll();
+````
+# Why Both Mono and Flux?
+
+## Flux
+
+* Represents a stream of data
+* Supports backpressure
+* Rich operators for stream processing
+
+## Mono
+
+* Represents a single asynchronous result
+* Lightweight
+* Ideal for request–response model
+
+If you are sure only one value will be returned, use `Mono` for better clarity and API design.
+
+---
+
+# Creating Mono (Factory Methods)
+
+| Method                | Use Case                                   |
+|-----------------------|--------------------------------------------|
+| `Mono.just(value)`    | Value already available in memory          |
+| `Mono.empty()`        | No value to emit                           |
+| `Mono.error(ex)`      | Emit an error                              |
+| `Mono.fromSupplier()` | Defer execution using `Supplier<T>`        |
+| `Mono.fromCallable()` | Defer execution using `Callable<T>`        |
+| `Mono.fromFuture()`   | Convert `CompletableFuture<T>` into `Mono` |
+
+---
+
+# Creating Flux (Factory Methods)
+
+| Method                     | Use Case                 |
+|----------------------------|--------------------------|
+| `Flux.just()`              | Emit fixed values        |
+| `Flux.fromIterable()`      | From a collection        |
+| `Flux.fromArray()`         | From an array            |
+| `Flux.fromStream()`        | From a Java Stream       |
+| `Flux.range(start, count)` | Emit a range of numbers  |
+| `Flux.interval(duration)`  | Emit values periodically |
+
+---
+
+# Mono and Flux Are Not Data Structures
+
+Mono and Flux do not store data like a List or Map.
+
+They represent a pipeline (or stream) through which data flows asynchronously.
+
+Nothing executes until someone subscribes.
+
+---
+
+# Conversion Between Mono and Flux
+
+| Scenario        | What to Use             |
+|-----------------|-------------------------|
+| Mono → Flux     | `Flux.from(mono)`       |
+| Flux → Mono     | `Mono.from(flux)`       |
+| Delay execution | `Flux.defer(() -> ...)` |
+
+---
+
+# Non-Blocking I/O and Event Loop (High Level)
+
+In non-blocking systems:
+
+* A small number of threads handle many requests
+* Each thread runs an event loop
+* Tasks are placed in a queue
+* When I/O is ready, processing continues without blocking the thread
+
+This enables high scalability without creating one thread per request.
+
+# Note
+* Use `Mono` for 0 or 1 result
+* Use `Flux` for multiple or streaming results
+* Execution starts only after subscription
+* Reactor provides powerful operators to build asynchronous pipelines
+
 
 
 ## Flux - create/generate
@@ -153,7 +285,7 @@ Reactor provides multiple operators to control execution order, concurrency, and
 - concatMap : transforms each emitted item into a new producer and subscribes to them sequentially (order preserved, waits for one to complete before starting the next).
 
 | Operator     | Order Preserved   | Parallel   | Use Case                     |
-| ------------ | ----------------- | ---------- | ---------------------------- |
+|--------------|-------------------|------------|------------------------------|
 | `startWith`  | Yes               | No         | Fallback (cache → DB)        |
 | `concatWith` | Yes               | No         | Sequential execution         |
 | `merge`      | No                | Yes        | Parallel independent calls   |
@@ -243,4 +375,171 @@ In simple terms, a Sink acts as a bridge between non-reactive (imperative) code 
 | `many - unicast`   | Flux           | 1                | subscriber cam join late if required. message will be stored in the memory |
 | `many - multicast` | Flux           | N                | late subscribers can not see the messages                                  |
 | `many - replay`    | Flux           | N                | with relay of all values to late susbscribers                              |
+
+
+
+# Reactor Context
+
+### What is Context?
+
+In traditional Java applications, we use `ThreadLocal` to store request-scoped data.
+
+However, in Reactive Programming, execution does not stay on a single thread.  
+Since reactive flows may switch threads, `ThreadLocal` is not reliable.
+
+Reactor provides **Context** as a reactive alternative.
+
+
+### Key Characteristics
+
+- Designed for reactive programming
+- Thread-safe
+- Immutable (every update creates a new Context)
+- Propagates along the reactive chain
+
+
+### What Can Be Stored in Context?
+
+Context is typically used to store:
+
+- Metadata about the current request
+- Simple key/value pairs
+- Immutable data
+
+Example use cases:
+- User ID
+- Correlation ID
+- Tenant ID
+- Authorization token
+
+
+### Why Do We Need Context?
+
+Context helps solve cross-cutting concerns without passing parameters through every method.
+
+Common cross-cutting concerns:
+
+- Authentication
+- Authorization
+- Rate limiting
+- Logging
+- Monitoring
+- Distributed tracing
+
+Instead of modifying every method signature to pass metadata, you store it in the Reactor Context and access it where needed.
+
+
+### Important Notes
+
+- Context is not a global variable.
+- It is attached to the reactive chain.
+- It flows from downstream to upstream (subscriber to publisher).
+- It should store small, immutable data only.
+
+
+### Note
+- `ThreadLocal` does not work reliably in reactive systems.
+- Reactor Context is the reactive-friendly alternative.
+- It stores request-scoped metadata safely.
+- It is immutable and thread-safe.
+- Mainly used for cross-cutting concerns like authentication and tracing.
+
+
+# Unit Testing - StepVerifier (How to Test in Reactive Programming?)
+
+In Reactive Programming, testing is different from traditional synchronous testing.
+
+Since `Mono` and `Flux` are asynchronous and lazy (nothing executes until subscribed), we need a proper way to:
+
+- Subscribe to the publisher
+- Assert emitted values
+- Verify completion or error signals
+- Control time for delayed or infinite streams
+
+Reactor provides **StepVerifier** (from `reactor-test`) for this purpose.
+
+
+## Why StepVerifier?
+
+StepVerifier allows you to:
+
+- Test emitted elements step by step
+- Verify completion (`onComplete`)
+- Verify errors (`onError`)
+- Test backpressure behavior
+- Test time-based publishers (using virtual time)
+
+
+## Basic Example - Testing Mono
+
+```
+Mono<String> mono = Mono.just("Hello");
+
+StepVerifier.create(mono)
+        .expectNext("Hello")
+        .verifyComplete();
+```
+
+What this does:
+
+* Subscribes to the Mono
+* Expects one value "Hello"
+* Verifies that the stream completes successfully
+
+
+## Testing Flux
+
+```
+Flux<Integer> flux = Flux.just(1, 2, 3);
+
+StepVerifier.create(flux)
+        .expectNext(1)
+        .expectNext(2)
+        .expectNext(3)
+        .verifyComplete();
+```
+
+## Testing Error Scenario
+
+```
+Mono<String> mono = Mono.error(new RuntimeException("Something went wrong"));
+
+StepVerifier.create(mono)
+        .expectError(RuntimeException.class)
+        .verify();
+```
+
+## Testing with expectNextCount
+
+Useful when you don't care about exact values:
+
+```
+StepVerifier.create(Flux.range(1, 10))
+        .expectNextCount(10)
+        .verifyComplete();
+```
+
+
+## Testing Time-Based Streams
+
+```
+StepVerifier.withVirtualTime(() -> Flux.interval(Duration.ofSeconds(1)).take(3))
+        .thenAwait(Duration.ofSeconds(3))
+        .expectNext(0L, 1L, 2L)
+        .verifyComplete();
+```
+
+This avoids waiting in real time.
+
+
+# Key Points
+
+* Always use `StepVerifier` to test reactive pipelines.
+* Nothing executes until you subscribe (StepVerifier handles subscription).
+* Verify:
+
+    * Data (`expectNext`)
+    * Completion (`verifyComplete`)
+    * Error (`expectError`)
+* Use `withVirtualTime()` for time-based testing.
 
